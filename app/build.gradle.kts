@@ -30,6 +30,17 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    flavorDimensions.add("env")
+
+    productFlavors {
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".staging"
+            buildConfigField("String", "BASE_URL", "\"https://api.themoviedb.org/3/\"")
+            buildConfigField("String", "IMAGES_BASE_URL", "\"https://image.tmdb.org/t/p/w500/\"")
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -39,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
