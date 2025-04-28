@@ -1,11 +1,14 @@
 package com.example.movies.domain.movie.usecase
 
 import com.example.movies.BuildConfig
+import com.example.movies.core.DefaultDispatcher
 import com.example.movies.domain.core.Error
 import com.example.movies.domain.core.Result
 import com.example.movies.domain.core.map
 import com.example.movies.domain.movie.MovieRepository
 import com.example.movies.domain.movie.model.Movie
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -15,11 +18,15 @@ import javax.inject.Inject
  */
 
 class GetMovieDetailsUseCase @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val movieRepository: MovieRepository,
+    @DefaultDispatcher private val dispatcher: CoroutineDispatcher
+
 ) {
     suspend operator fun invoke(movieId: Int): Result<Movie, Error> {
-        return movieRepository.getMovieDetails(movieId).map { movie ->
-            movie.copy(posterPath = BuildConfig.IMAGES_BASE_URL + movie.posterPath)
+        return withContext(dispatcher) {
+            movieRepository.getMovieDetails(movieId).map { movie ->
+                movie.copy(posterPath = BuildConfig.IMAGES_BASE_URL + movie.posterPath)
+            }
         }
     }
 }

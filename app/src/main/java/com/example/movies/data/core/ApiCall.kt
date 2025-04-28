@@ -2,6 +2,7 @@ package com.example.movies.data.core
 
 import com.example.movies.domain.core.Error
 import com.example.movies.domain.core.Result
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -21,10 +22,11 @@ import kotlin.coroutines.coroutineContext
  * @param execute the block to invoke the retrofit method.
  */
 suspend inline fun <reified T> apiCall(
+    dispatcher: CoroutineDispatcher = Dispatchers.IO,
     crossinline execute: suspend () -> Response<T>
 ): Result<T, Error.Remote> {
     val response = try {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             execute()
         }
     } catch (e: SocketTimeoutException) {
@@ -38,7 +40,7 @@ suspend inline fun <reified T> apiCall(
         return Result.Error(Error.Remote.UNKNOWN)
     }
 
-    return withContext(Dispatchers.Default) {
+    return withContext(dispatcher) {
         responseToResult(response)
     }
 }
