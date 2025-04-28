@@ -39,13 +39,13 @@ fun App() {
                         fadeIn(animationSpec = tween(300))
                     },
                     exitTransition = {
-                        fadeOut(animationSpec = tween(150))
+                        fadeOut(animationSpec = tween(300))
                     },
                     popEnterTransition = {
                         fadeIn(animationSpec = tween(300))
                     },
                     popExitTransition = {
-                        fadeOut(animationSpec = tween(150))
+                        fadeOut(animationSpec = tween(300))
                     }
                 ) {
                     MoviesScreen { id ->
@@ -60,7 +60,7 @@ fun App() {
                                 easing = FastOutSlowInEasing
                             )
                         ) + fadeIn(
-                            animationSpec = tween(150)
+                            animationSpec = tween(300)
                         )
                     },
                     exitTransition = {
@@ -70,7 +70,7 @@ fun App() {
                                 easing = FastOutSlowInEasing
                             )
                         ) + fadeOut(
-                            animationSpec = tween(150)
+                            animationSpec = tween(300)
                         )
                     },
                     popEnterTransition = {
@@ -80,7 +80,7 @@ fun App() {
                                 easing = FastOutSlowInEasing
                             )
                         ) + fadeIn(
-                            animationSpec = tween(150)
+                            animationSpec = tween(300)
                         )
                     },
                     popExitTransition = {
@@ -90,7 +90,7 @@ fun App() {
                                 easing = FastOutSlowInEasing
                             )
                         ) + fadeOut(
-                            animationSpec = tween(150)
+                            animationSpec = tween(300)
                         )
                     }
                 ) {
