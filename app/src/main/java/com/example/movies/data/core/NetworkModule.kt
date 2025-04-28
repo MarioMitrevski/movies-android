@@ -21,8 +21,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3ZDk5NjUwZWMwOGJiMGYwOTE1OTkwYTAxMjFjN2I2YSIsIm5iZiI6MTY0NjM0NzIwOC4yNjMsInN1YiI6IjYyMjE0M2M4YzI4MjNhMDA0MjE1M2E5MyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.eN3zTAmOhnYgOp6qlJvEnVEutlttZCpSxvZW6Ev9JIQ"
-
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
@@ -32,7 +30,7 @@ object NetworkModule {
 
         val authInterceptor = Interceptor { chain ->
             val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer $ACCESS_TOKEN")
+                .addHeader("Authorization", "Bearer ${BuildConfig.TMDB_ACCESS_TOKEN}")
                 .build()
             chain.proceed(request)
         }
