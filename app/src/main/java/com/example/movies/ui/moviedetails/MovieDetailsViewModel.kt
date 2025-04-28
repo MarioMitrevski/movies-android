@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,20 +41,21 @@ class MovieDetailsViewModel @Inject constructor(
     }
 
     private fun loadMovieDetails() {
-        _state.value = _state.value.copy(isLoading = true, error = null)
         viewModelScope.launch {
+            _state.update {
+                it.copy(isLoading = true, error = null)
+            }
+
             getMovieDetailsUseCase(movieId)
                 .onSuccess { movie ->
-                    _state.value = _state.value.copy(
-                        movie = movie,
-                        isLoading = false
-                    )
+                    _state.update {
+                        it.copy(movie = movie, isLoading = false)
+                    }
                 }
                 .onError { error ->
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = error
-                    )
+                    _state.update {
+                        it.copy(isLoading = false, error = error)
+                    }
                 }
         }
     }
