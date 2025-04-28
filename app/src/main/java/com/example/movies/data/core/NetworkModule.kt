@@ -1,7 +1,7 @@
-package com.example.movies.di
+package com.example.movies.data.core
 
 import com.example.movies.BuildConfig
-import com.example.movies.data.movie.network.MoviesApi
+import com.example.movies.data.movie.remote.MovieApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -77,7 +77,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideMoviesApi(retrofit: Retrofit): MoviesApi {
-        return retrofit.create(MoviesApi::class.java)
+    fun provideMoviesApi(retrofit: Retrofit): MovieApi {
+        return retrofit.create(MovieApi::class.java)
     }
 }
