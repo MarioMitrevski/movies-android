@@ -1,45 +1,47 @@
 package com.example.movies.ui.moviedetails
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.movies.R
-import com.example.movies.domain.movie.model.Movie
+import com.example.movies.ui.components.BackButton
+import com.example.movies.ui.components.ErrorContent
 import com.example.movies.ui.theme.MoviesTheme
 import kotlinx.coroutines.flow.collectLatest
+
+private val BACKDROP_HEIGHT = 400.dp
 
 @Composable
 fun MovieDetailsScreen(
@@ -62,26 +64,14 @@ fun MovieDetailsScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MovieDetailsUi(
     state: MovieDetailsUiState,
     onIntent: (MovieDetailsUiIntent) -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = state.movie?.title.orEmpty()) },
-                navigationIcon = {
-                    IconButton(onClick = { onIntent(MovieDetailsUiIntent.OnBackClick) }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-        }) { innerPadding ->
+    val scrollState = rememberScrollState()
+
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -94,14 +84,60 @@ private fun MovieDetailsUi(
             } else if (state.error != null) {
                 ErrorContent(
                     onRetry = { onIntent(MovieDetailsUiIntent.OnRetry) },
+                    text = stringResource(R.string.error_loading_movie_details),
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
                 state.movie?.let { movie ->
-                    MovieDetails(
-                        movie = movie,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Box(modifier = Modifier.fillMaxSize()) {
+
+                        MovieDetailsImage(
+                            posterPath = movie.posterPath,
+                            title = movie.title,
+                            scrollState = scrollState
+                        )
+
+                        // Scrollable content
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp)
+                                .verticalScroll(scrollState)
+                        ) {
+                            Spacer(modifier = Modifier.height(BACKDROP_HEIGHT - 100.dp))
+
+                            Text(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                text = movie.title,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+
+                            Text(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                text = stringResource(
+                                    R.string.rating,
+                                    movie.voteAverage,
+                                    movie.voteCount
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+
+                            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_large)))
+
+                            Text(
+                                text = movie.description,
+                                style = MaterialTheme.typography.bodySmall.copy(textAlign = TextAlign.Justify),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+
+                        BackButton(
+                            modifier = Modifier.padding(dimensionResource(R.dimen.spacing_small)),
+                            onBackClick = { onIntent(MovieDetailsUiIntent.OnBackClick) }
+                        )
+                    }
                 }
             }
         }
@@ -109,76 +145,50 @@ private fun MovieDetailsUi(
 }
 
 @Composable
-private fun MovieDetails(
-    movie: Movie,
-    modifier: Modifier = Modifier
+private fun MovieDetailsImage(
+    posterPath: String?,
+    title: String,
+    scrollState: ScrollState
 ) {
-    Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(dimensionResource(R.dimen.spacing_medium))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(BACKDROP_HEIGHT)
     ) {
         AsyncImage(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    // Parallax effect - image moves at 0.3x the scroll speed for a more dramatic effect
+                    translationY = -scrollState.value * 0.3f
+                    // Fade out effect - image becomes more transparent as we scroll (from 100% to 0%)
+                    alpha =
+                        1f - (scrollState.value / scrollState.maxValue.toFloat()).coerceIn(0f, 1f)
+                },
             model = ImageRequest.Builder(LocalContext.current)
                 .diskCachePolicy(CachePolicy.ENABLED)
-                .data(movie.posterPath)
+                .data(posterPath)
                 .crossfade(true)
                 .build(),
-            contentDescription = movie.title,
-            contentScale = ContentScale.Crop,
+            contentDescription = title,
+            contentScale = ContentScale.Crop
+        )
+
+        // Dynamic shadow overlay based on scroll
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9f)
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background.copy(alpha = (scrollState.value / scrollState.maxValue.toFloat()) * 1f),
+                            MaterialTheme.colorScheme.background
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
+                    )
+                )
         )
-
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
-
-        Text(
-            text = movie.title,
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
-
-
-        Text(
-            text = stringResource(R.string.rating, movie.voteAverage, movie.voteCount),
-            style = MaterialTheme.typography.bodyLarge
-        )
-
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
-
-        Text(
-            text = stringResource(R.string.overview),
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
-
-        Text(
-            text = movie.description,
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(dimensionResource(R.dimen.spacing_medium)),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.error_loading_movie_details),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
-        Button(onClick = onRetry) {
-            Text(text = stringResource(R.string.retry))
-        }
     }
 }
 

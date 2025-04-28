@@ -6,6 +6,6 @@
     <string name="error_loading_movie_details">Failed to load movie details</string>
     <string name="overview">Overview</string>
     <string name="release_date">Release date: %1$s</string>
-    <string name="rating">Rating: %1$.1f (%2$s)</string>
+    <string name="rating">%1$.1f (%2$s)</string>
     <string name="retry">Retry</string>
 </resources>

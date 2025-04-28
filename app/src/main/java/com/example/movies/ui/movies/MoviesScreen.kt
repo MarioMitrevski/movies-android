@@ -1,18 +1,13 @@
 package com.example.movies.ui.movies
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -20,23 +15,12 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -53,6 +36,8 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.movies.R
 import com.example.movies.domain.movie.model.Movie
+import com.example.movies.ui.components.AppSearchBar
+import com.example.movies.ui.components.ErrorContent
 import com.example.movies.ui.theme.MoviesTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -101,12 +86,12 @@ fun MoviesUi(state: MoviesUiState, gridState: LazyGridState, onIntent: (MoviesUi
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            SearchBar(
-                query = state.searchQuery,
-                onQueryChange = { onIntent(MoviesUiIntent.OnSearchQueryChange(it)) },
+            AppSearchBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(dimensionResource(R.dimen.spacing_medium))
+                    .padding(dimensionResource(R.dimen.spacing_medium)),
+                query = state.searchQuery,
+                onQueryChange = { onIntent(MoviesUiIntent.OnSearchQueryChange(it)) }
             )
 
             Box(modifier = Modifier.fillMaxSize()) {
@@ -117,6 +102,7 @@ fun MoviesUi(state: MoviesUiState, gridState: LazyGridState, onIntent: (MoviesUi
                 } else if (state.error != null) {
                     ErrorContent(
                         onRetry = { onIntent(MoviesUiIntent.OnRetry) },
+                        text = stringResource(R.string.error_loading_movies),
                         modifier = Modifier.align(Alignment.Center)
                     )
                 } else {
@@ -130,44 +116,6 @@ fun MoviesUi(state: MoviesUiState, gridState: LazyGridState, onIntent: (MoviesUi
             }
         }
     }
-}
-
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-
-    var showClearButton by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(query) {
-        showClearButton = query.isNotEmpty()
-    }
-
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        placeholder = {
-            Text(text = stringResource(R.string.search_movies))
-        },
-        singleLine = true,
-        trailingIcon = {
-            AnimatedVisibility(
-                visible = showClearButton,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = null
-                    )
-                }
-            }
-        }
-    )
 }
 
 @Composable
@@ -192,7 +140,8 @@ private fun MoviesGrid(
             contentType = { "movie" }
         ) { movie ->
             MovieItem(
-                movie = movie,
+                posterPath = movie.posterPath,
+                title = movie.title,
                 onClick = { onMovieClick(movie.id) }
             )
         }
@@ -217,7 +166,8 @@ private fun MoviesGrid(
 
 @Composable
 private fun MovieItem(
-    movie: Movie,
+    posterPath: String?,
+    title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -232,31 +182,11 @@ private fun MovieItem(
             model = ImageRequest.Builder(LocalContext.current)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .crossfade(true)
-                .data(movie.posterPath)
+                .data(posterPath)
                 .build(),
-            contentDescription = movie.title,
+            contentDescription = title,
             contentScale = ContentScale.Crop
         )
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.error_loading_movies),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRetry) {
-            Text(text = stringResource(R.string.retry))
-        }
     }
 }
 
