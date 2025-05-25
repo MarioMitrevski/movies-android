@@ -11,9 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,9 +32,6 @@ class MoviesViewModel @Inject constructor(
     private val _state = MutableStateFlow(MoviesUiState())
     val state: StateFlow<MoviesUiState> = _state
 
-    private val _effect = MutableSharedFlow<MoviesEffect>()
-    val effect: SharedFlow<MoviesEffect> = _effect
-
     private var searchJob: Job? = null
 
     init {
@@ -48,7 +43,7 @@ class MoviesViewModel @Inject constructor(
             MoviesUiIntent.LoadNextPage -> loadMovies()
             is MoviesUiIntent.OnSearchQueryChange -> updateSearchQuery(intent.query)
             is MoviesUiIntent.OnRetry -> retryMovies()
-            is MoviesUiIntent.OnMovieClick -> navigateToDetails(intent.movieId)
+            is MoviesUiIntent.OnMovieClick -> {}
         }
     }
 
@@ -97,7 +92,6 @@ class MoviesViewModel @Inject constructor(
             _state.update {
                 it.copy(searchQuery = query)
             }
-            _effect.emit(MoviesEffect.ScrollToTop)
 
             delay(300) // Debounce time in milliseconds
             _state.update {
@@ -112,11 +106,5 @@ class MoviesViewModel @Inject constructor(
             it.copy(currentPage = 1, movies = emptyList())
         }
         loadMovies()
-    }
-
-    private fun navigateToDetails(movieId: Int) {
-        viewModelScope.launch {
-            _effect.emit(MoviesEffect.NavigateToDetails(movieId))
-        }
     }
 } 

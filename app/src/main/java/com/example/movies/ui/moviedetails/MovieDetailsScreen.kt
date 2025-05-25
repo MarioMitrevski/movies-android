@@ -1,5 +1,6 @@
 package com.example.movies.ui.moviedetails
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +38,6 @@ import com.example.movies.R
 import com.example.movies.ui.components.BackButton
 import com.example.movies.ui.components.ErrorContent
 import com.example.movies.ui.theme.MoviesTheme
-import kotlinx.coroutines.flow.collectLatest
 
 private val BACKDROP_HEIGHT = 400.dp
 
@@ -49,17 +48,23 @@ fun MovieDetailsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.effect.collectLatest { effect ->
-            when (effect) {
-                MovieDetailsEffect.NavigateBack -> onNavigateBack()
-            }
-        }
+    BackHandler {
+        viewModel.onIntent(MovieDetailsUiIntent.OnBackClick)
+        onNavigateBack()
     }
-
+    
     MovieDetailsUi(
         state = state,
-        onIntent = viewModel::onIntent,
+        onIntent = {
+            when (it) {
+                MovieDetailsUiIntent.OnBackClick -> {
+                    viewModel.onIntent(it)
+                    onNavigateBack()
+                }
+
+                else -> viewModel.onIntent(it)
+            }
+        },
     )
 }
 

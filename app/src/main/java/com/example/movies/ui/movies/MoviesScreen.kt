@@ -55,16 +55,6 @@ fun MoviesScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
-    LaunchedEffect(Unit) {
-        viewModel.effect
-            .collectLatest { effect ->
-                when (effect) {
-                    is MoviesEffect.NavigateToDetails -> onNavigateToDetails(effect.movieId)
-                    is MoviesEffect.ScrollToTop -> gridState.scrollToItem(0)
-                }
-            }
-    }
-
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .distinctUntilChanged()
@@ -75,7 +65,24 @@ fun MoviesScreen(
             }
     }
 
-    MoviesUi(state = state, gridState = gridState, onIntent = viewModel::onIntent)
+    LaunchedEffect(state.searchQuery) {
+        gridState.scrollToItem(0)
+    }
+
+    MoviesUi(
+        state = state,
+        gridState = gridState,
+        onIntent = {
+            when (it) {
+                is MoviesUiIntent.OnMovieClick -> {
+                    viewModel.onIntent(it)
+                    onNavigateToDetails(it.movieId)
+                }
+
+                else -> viewModel.onIntent(it)
+            }
+        }
+    )
 }
 
 @Composable
